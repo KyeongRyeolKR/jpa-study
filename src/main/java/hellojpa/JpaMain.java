@@ -16,6 +16,13 @@ import java.util.List;
  * EntityManagerFactory 는 하나로 애플리케이션 전체 공유함
  * EntityManager 는 쓰레드간에 공유하면 안됨! (사용하고 버려야함)
  * JPA 의 모든 데이터 변경은 트랜잭션 안에서 실행
+ *
+ * 영속성 컨텍스트의 이점
+ * - 1차 캐시
+ * - 동일성 보장
+ * - 트랜잭션을 지원하는 쓰기 지연
+ * - 변경 감지
+ * - 지연 로딩
  */
 public class JpaMain {
 
@@ -29,15 +36,16 @@ public class JpaMain {
         tx.begin();
 
         try {
-//            Member findMember = em.find(Member.class, 1L);
-            List<Member> result = em.createQuery("select m from Member as m", Member.class)
-                    .setFirstResult(5)
-                    .setMaxResults(8)
-                    .getResultList();
 
-            for (Member member : result) {
-                System.out.println("member.name = " + member.getName());
-            }
+            // 비영속
+            Member member = new Member();
+            member.setId(100L);
+            member.setName("HelloJPA");
+
+            // 영속
+            System.out.println("=== BEFORE ===");
+            em.persist(member);
+            System.out.println("=== AFTER ===");
 
             tx.commit();
         } catch (Exception e) {
