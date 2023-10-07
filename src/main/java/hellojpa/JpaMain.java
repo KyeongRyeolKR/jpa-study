@@ -19,9 +19,20 @@ import java.util.List;
  *
  * 영속성 컨텍스트의 이점
  * - 1차 캐시
+ *  -> 같은 엔티티 매니저에서만 캐시가 되기 때문에 사실상 큰 성능 이점이 있지는 않다.
+ *     하지만, 만약 매우 복잡한 비즈니스 로직이 있다면 큰 성능 이점이 있을 수도 있다.
+ *
  * - 동일성 보장
+ *  -> 같은 객체를 조회할 때, 같은 트랜잭션 안에서는 동일한 객체를 보장한다.('==' 비교 시 true)
+ *
  * - 트랜잭션을 지원하는 쓰기 지연
- * - 변경 감지
+ *  -> insert SQL을 마치 버퍼처럼 쓰기 지연 SQL 저장소에 모아놨다가
+ *     커밋하는 시점에 쌓여있던 SQL을 한번에 보낸다(flush).
+ *
+ * - 변경 감지(Dirty Checking)
+ *  -> 1차 캐시에 저장되어 있는 스냅샷과 비교해서 변경이 있다면
+ *     update SQL을 쓰기 지연 SQL 저장소에 저장한다.(remove도 동일)
+ *
  * - 지연 로딩
  */
 public class JpaMain {
@@ -36,16 +47,11 @@ public class JpaMain {
         tx.begin();
 
         try {
-
-            // 비영속
-            Member member = new Member();
-            member.setId(100L);
-            member.setName("HelloJPA");
-
             // 영속
-            System.out.println("=== BEFORE ===");
-            em.persist(member);
-            System.out.println("=== AFTER ===");
+            Member member = em.find(Member.class, 150L);
+            member.setName("ZZZZ");
+
+            System.out.println("======================");
 
             tx.commit();
         } catch (Exception e) {
