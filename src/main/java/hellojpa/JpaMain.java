@@ -34,6 +34,13 @@ import java.util.List;
  *     update SQL을 쓰기 지연 SQL 저장소에 저장한다.(remove도 동일)
  *
  * - 지연 로딩
+ *
+ * 플러시(flush)
+ * - 순서 : 변경 감지 -> 수정된 엔티티 쓰기 지연 SQL 저장소 등록 -> 쌓인 SQL을 DB에 전송(등록,수정,삭제)
+ * - 보통, 커밋 시점 또는 JPQL 쿼리를 실행할 때 자동으로 호출된다.
+ * - 플러시는 영속성 컨텍스트를 비우는것이 아님!
+ * - 영속성 컨텍스트의 변경내용을 DB에 동기화
+ * - 트랜잭션이라는 작업 단위에서 커밋 직전에만 동기화 해주면 된다.
  */
 public class JpaMain {
 
@@ -48,8 +55,10 @@ public class JpaMain {
 
         try {
             // 영속
-            Member member = em.find(Member.class, 150L);
-            member.setName("ZZZZ");
+            Member member = new Member(200L, "member200");
+            em.persist(member);
+
+            em.flush(); // 강제 호출
 
             System.out.println("======================");
 
