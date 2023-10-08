@@ -1,5 +1,6 @@
 package hellojpa;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
@@ -8,6 +9,7 @@ public class Member {
 
     @Id
     private Long id;
+    @Column(unique = true, length = 10) // 컬럼 추가 설정(제약 조건 추가)
     private String name;
 
     public Member() {
