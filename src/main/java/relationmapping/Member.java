@@ -18,7 +18,8 @@ public class Member {
 //    private Long teamId;
 
     // 객체 기준 설계
-    // 단방향 연관관계 매핑
+    // 단방향 연관관계 매핑 - Team에도 연관관계가 매핑 되어 있기 때문에 논리적으로 양방향으로 됨
+    // 연관관계의 주인 - 무조건 외래키를 가진 엔티티가 주인이 된다.(즉, N인 엔티티가 주인)
     @ManyToOne // N : Member, 1 : Team
     @JoinColumn(name = "TEAM_ID") // 조인할 컬럼 지정
     private Team team;
