@@ -14,6 +14,21 @@ import java.util.List;
  *   또한 실무에서는 JPQL에서 역방향 탐색할 일이 많다.
  *   그러므로 설계 단계에서는 단방향 매핑을 깔끔하게 설정하는 것이 중요하며,
  *   양방향 매핑은 테이블에 영향을 주지 않기 때문에 필요할 때 추가하면 된다!
+ *
+ * 일대다 [1:N]
+ * - 일대다 단방향은 일(1)이 연관관계의 주인이다.
+ *   테이블 일대다 관계는 항상 다(N) 쪽에 외래 키가 있다.
+ *   그런데 객체와 테이블의 차이 때문에 반대편 테이블의 외래 키를 관리하는 특이한 구조가 된다.
+ *   '@JoinColumn'을 꼭 사용해야한다! 그렇지 않으면 조인 테이블 방식(중간 테이블)을 사용한다.
+ *
+ *   [일대다 단방향 매핑의 단점]
+ *   - 엔티티가 관리하는 외래 키가 다른 테이블에 있으며, 연관관계 관리를 위해 추가로 UPDATE SQL을 실행한다.
+ *     그러므로 일대다 단방향 매핑보다는 차라리 다대일 양방향 매핑을 사용하는 것이 좋다.
+ *
+ *   [일대다 양방향]
+ *   - 이러한 매핑은 공식적으로는 존재하지 않는다. 대신 @JoinColumn의 옵션으로 (insertable=false, updatable=false)을 넣어서
+ *     읽기 전용 필드로 만들어 마치 양방향 매핑처럼 사용할 수 있다.
+ *     하지만 권장하는 방식이 아니므로 이 역시 다대일 양방향을 사용하는 것이 좋다.
  */
 public class JpaMain {
 
@@ -27,34 +42,14 @@ public class JpaMain {
         tx.begin();
 
         try {
-            // 저장
-            Team team = new Team();
-            team.setName("TeamA");
-//            team.getMembers().add(member); // 연관관계의 주인이 아니기 때문에 변경이 불가능함
-            em.persist(team);
-
             Member member = new Member();
             member.setUsername("member1");
-            member.changeTeam(team); // 연관관계의 주인이기 때문에 변경이 가능함
             em.persist(member);
 
-//            team.getMembers().add(member); // 주인이 아님에도 값을 변경함 - 연관관계 편의 메서드(changeTeam())를 만듬으로써 생략 가능
-
-            // 생성된 쿼리를 확인 및 DB 동기화를 하기 위해 강제로 flush 호출 및 영속성 컨텍스트 초기화
-//            em.flush();
-//            em.clear();
-
-            // flush를 하지 않으면 1차 캐시에서 team을 찾아오는데, 그땐 팀에 저장된 멤버가 없다.
-            // 그러므로 조회할 수 없다!
-            // 그렇기 때문에 양방향 관계에서는 값을 둘 다 변경해야한다!!
-            // 물론 JPA 입장에서 보면 주인에만 값을 변경해도 괜찮지만, 객체지향 입장으로 보면 둘 다 변경해야한다.
-            Team findTeam = em.find(Team.class, team.getId());
-            List<Member> members = findTeam.getMembers();
-            System.out.println("=====================");
-            for (Member m : members) {
-                System.out.println("m = " + m.getUsername());
-            }
-            System.out.println("=====================");
+            Team team = new Team();
+            team.setName("teamA");
+            team.getMembers().add(member);
+            em.persist(team);
 
             tx.commit();
         } catch (Exception e) {

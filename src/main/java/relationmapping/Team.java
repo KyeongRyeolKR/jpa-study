@@ -14,9 +14,8 @@ public class Team {
 
     private String name;
 
-    // 단방향 매핑 - Member에도 연관관계가 매핑 되어 있기 때문에 논리적으로 양방향으로 됨
-    // 연관관계의 주인이 아니기 때문에 읽기 전용이다.
-    @OneToMany(mappedBy = "team")
+    @OneToMany
+    @JoinColumn(name = "TEAM_ID")
     private List<Member> members = new ArrayList<>();
 
     public Long getId() {
