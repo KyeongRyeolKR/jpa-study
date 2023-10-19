@@ -1,11 +1,12 @@
 package relationmapping;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-//@Entity
-public class Member {
+@Entity
+public class Member extends BaseEntity {
 
     @Id
     @GeneratedValue
