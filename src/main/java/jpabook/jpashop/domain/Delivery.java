@@ -5,8 +5,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.OneToOne;
 
-//@Entity
-public class Delivery {
+@Entity
+public class Delivery extends BaseEntity {
 
     @Id
     @GeneratedValue
