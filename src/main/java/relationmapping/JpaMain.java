@@ -67,15 +67,37 @@ public class JpaMain {
         tx.begin();
 
         try {
-            Member member = new Member();
-            member.setUsername("user1");
-            member.setCreatedBy("kim");
-            member.setCreatedDate(LocalDateTime.now());
 
-            em.persist(member);
+            Member member1 = new Member();
+            member1.setUsername("hello");
+            em.persist(member1);
+
+            Member member2 = new Member();
+            member2.setUsername("hello");
+            em.persist(member2);
 
             em.flush();
             em.clear();
+
+            Member m = em.find(Member.class, member1.getId());
+            System.out.println("m = " + m.getClass());
+
+            Member mRef = em.getReference(Member.class, member1.getId());
+            System.out.println("mRef = " + mRef.getClass());
+
+            System.out.println("m == mRef : " + (m == mRef));
+
+            Member m1 = em.find(Member.class, member1.getId());
+//            Member m2 = em.find(Member.class, member2.getId());
+            Member m2 = em.getReference(Member.class, member2.getId());
+            System.out.println("m1 == m2 : " + (m1.getClass() == m2.getClass()));
+
+//            Member findMember = em.find(Member.class, member1.getId());
+            Member findMember = em.getReference(Member.class, member1.getId()); // 프록시
+
+            System.out.println("findMember = " + findMember.getClass());
+            System.out.println("findMember.id = " + findMember.getId());
+            System.out.println("findMember.username = " + findMember.getUsername());
 
             tx.commit();
         } catch (Exception e) {
