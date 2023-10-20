@@ -54,6 +54,19 @@ import java.util.List;
  *   - 다대다 매핑이 편리해보이지만 실무에서 사용하면 절대 안된다!!!
  *     연결 테이블이 단순히 연결만 하고 끝나지 않기 때문이다.
  *     ex) 주문시간, 수량 같은 데이터가 들어올 수 있음
+ *
+ * 지연로딩, 즉시로딩
+ * - 지연로딩 : 실제 객체가 아닌 프록시 객체를 주입해서 사용 시점에 DB에 쿼리를 날려 실제 데이터를 가져오는 방법
+ * - 즉시로딩 : 실제 객체에 필요한 모든 데이터들을 바로 가져오는 방법
+ *
+ * !! 가급적 지연로딩을 사용하자 !!
+ * 이유 : 즉시로딩에서 한두개만 조인하면 그나마 괜찮을 수도 있지만 보통 실무에서는 많은 테이블을 조인하기 때문에 성능이 많이 떨어진다.
+ *       또한 JPQL에서 N+1 문제를 일으킨다.
+ *       (N+1 문제란 한개의 쿼리를 날렸는데 추가적으로 N개의 쿼리가 더 나가는 문제를 말함)
+ *
+ * 실무에서는 모든 연관관계를 지연로딩으로 설정하고, 즉시로딩이 필요한 경우에는 fetch join을 사용하면 된다.
+ * 주의 : @ManyToOne, @OneToOne은 즉시로딩이 디폴트 값이다.
+ *       하지만 @OneToMany, @ManyToMany는 지연로딩이 디폴트 값이다.
  */
 public class JpaMain {
 
@@ -68,40 +81,33 @@ public class JpaMain {
 
         try {
 
+            Team team = new Team();
+            team.setName("teamA");
+            em.persist(team);
+
             Member member1 = new Member();
             member1.setUsername("hello");
+            member1.setTeam(team);
             em.persist(member1);
-
-            Member member2 = new Member();
-            member2.setUsername("hello");
-            em.persist(member2);
 
             em.flush();
             em.clear();
 
-            Member m = em.find(Member.class, member1.getId());
-            System.out.println("m = " + m.getClass());
+//            Member m = em.find(Member.class, member1.getId());
 
-            Member mRef = em.getReference(Member.class, member1.getId());
-            System.out.println("mRef = " + mRef.getClass());
-
-            System.out.println("m == mRef : " + (m == mRef));
-
-            Member m1 = em.find(Member.class, member1.getId());
-//            Member m2 = em.find(Member.class, member2.getId());
-            Member m2 = em.getReference(Member.class, member2.getId());
-            System.out.println("m1 == m2 : " + (m1.getClass() == m2.getClass()));
-
-//            Member findMember = em.find(Member.class, member1.getId());
-            Member findMember = em.getReference(Member.class, member1.getId()); // 프록시
-
-            System.out.println("findMember = " + findMember.getClass());
-            System.out.println("findMember.id = " + findMember.getId());
-            System.out.println("findMember.username = " + findMember.getUsername());
+            /*
+            즉시로딩일 때, 만약 아래와 같은 JPQL로 모든 member를 조회하면
+            먼저 모든 member를 조회하기 위해 select 쿼리가 나가고
+            각 member 별로 필요한 team을 조회하기 위해 또!! select 쿼리가 나간다!
+            그러므로 성능 저하가 발생한다.
+             */
+            List<Member> members = em.createQuery("select m from Member m", Member.class)
+                    .getResultList();
 
             tx.commit();
         } catch (Exception e) {
             tx.rollback();
+            e.printStackTrace();
         } finally {
             em.close();
         }
