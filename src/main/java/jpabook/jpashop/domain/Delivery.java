@@ -4,7 +4,7 @@ import javax.persistence.*;
 
 import static javax.persistence.FetchType.*;
 
-@Entity
+//@Entity
 public class Delivery extends BaseEntity {
 
     @Id
