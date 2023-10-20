@@ -67,6 +67,20 @@ import java.util.List;
  * 실무에서는 모든 연관관계를 지연로딩으로 설정하고, 즉시로딩이 필요한 경우에는 fetch join을 사용하면 된다.
  * 주의 : @ManyToOne, @OneToOne은 즉시로딩이 디폴트 값이다.
  *       하지만 @OneToMany, @ManyToMany는 지연로딩이 디폴트 값이다.
+ *
+ * 영속성 전이(CASCADE)
+ * - ALL : 모두 적용
+ * - PERSIST : 영속
+ * - REMOVE : 삭제
+ * 주의 : 소유자가 하나일 때만 사용해야한다!!
+ *       ex) 게시판과 첨부파일 관계
+ *
+ * 고아 객체 삭제
+ * - 부모 엔티티와 연관관계가 끊어진 자식 엔티티를 자동으로 삭제하는 기능
+ * - orphanRemoval = true
+ * 주의 : 이것도 영속성 전이처럼 참조하는 곳이 하나일 때만 사용해야한다!
+ *       또한 부모를 제거해도 자식은 고아가 되는 것이므로 부모를 제거해도 자식이 함께 삭제된다.
+ *       마치 CascadeType.REMOVE처럼 동작한다!
  */
 public class JpaMain {
 
@@ -81,28 +95,22 @@ public class JpaMain {
 
         try {
 
-            Team team = new Team();
-            team.setName("teamA");
-            em.persist(team);
+            Child child1 = new Child();
+            Child child2 = new Child();
 
-            Member member1 = new Member();
-            member1.setUsername("hello");
-            member1.setTeam(team);
-            em.persist(member1);
+            Parent parent = new Parent();
+            parent.addChild(child1);
+            parent.addChild(child2);
+
+            em.persist(parent);
+//            em.persist(child1);
+//            em.persist(child2);
 
             em.flush();
             em.clear();
 
-//            Member m = em.find(Member.class, member1.getId());
-
-            /*
-            즉시로딩일 때, 만약 아래와 같은 JPQL로 모든 member를 조회하면
-            먼저 모든 member를 조회하기 위해 select 쿼리가 나가고
-            각 member 별로 필요한 team을 조회하기 위해 또!! select 쿼리가 나간다!
-            그러므로 성능 저하가 발생한다.
-             */
-            List<Member> members = em.createQuery("select m from Member m", Member.class)
-                    .getResultList();
+            Parent findParent = em.find(Parent.class, parent.getId());
+            findParent.getChildList().remove(0); // 고아 객체 삭제
 
             tx.commit();
         } catch (Exception e) {
