@@ -9,7 +9,7 @@ import java.util.Set;
 
 import static javax.persistence.CascadeType.ALL;
 
-@Entity
+//@Entity
 public class Member extends BaseEntity {
 
     @Id

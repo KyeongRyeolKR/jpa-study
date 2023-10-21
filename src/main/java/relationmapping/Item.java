@@ -22,7 +22,7 @@ import javax.persistence.*;
  * 단순하고 중요하지 않은 엔티티라면 단일 테이블 전략, 복잡하고 중요하다면 조인 전략을 사용해라.
  * 물론 상황에 맞는 트레이드오프를 고민해야한다!
  */
-@Entity
+//@Entity
 //@Inheritance(strategy = InheritanceType.JOINED)
 //@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
