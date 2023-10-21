@@ -3,7 +3,11 @@ package relationmapping;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import static javax.persistence.CascadeType.ALL;
 
 @Entity
 public class Member extends BaseEntity {
@@ -35,6 +39,23 @@ public class Member extends BaseEntity {
     // 주소
     @Embedded
     private Address homeAddress;
+
+    @ElementCollection // 값 타입 컬렉션
+    @CollectionTable(name = "FAVORITE_FOOD", joinColumns =
+        @JoinColumn(name = "MEMBER_ID")
+    ) // 값 타입 컬렉션 테이블 명 지정 및 조인 컬럼 설정
+    @Column(name = "FOOD_NAME") // 각각의 값 타입이 가지고 있는 컬럼이 하나이기 때문에 예외적으로 컬럼 명을 지정해줌
+    private Set<String> favoriteFoods = new HashSet<>();
+
+//    @ElementCollection // 값 타입 컬렉션
+//    @CollectionTable(name = "ADDRESS", joinColumns =
+//        @JoinColumn(name = "MEMBER_ID")
+//    ) // 값 타입 컬렉션 테이블 명 및 조인 컬럼 설정
+//    private List<Address> addressHistory = new ArrayList<>();
+
+    @OneToMany(cascade = ALL, orphanRemoval = true)
+    @JoinColumn(name = "MEMBER_ID")
+    private List<AddressEntity> addressHistory = new ArrayList<>();
 
     public Long getId() {
         return id;
@@ -90,5 +111,21 @@ public class Member extends BaseEntity {
 
     public void setHomeAddress(Address homeAddress) {
         this.homeAddress = homeAddress;
+    }
+
+    public Set<String> getFavoriteFoods() {
+        return favoriteFoods;
+    }
+
+    public void setFavoriteFoods(Set<String> favoriteFoods) {
+        this.favoriteFoods = favoriteFoods;
+    }
+
+    public List<AddressEntity> getAddressHistory() {
+        return addressHistory;
+    }
+
+    public void setAddressHistory(List<AddressEntity> addressHistory) {
+        this.addressHistory = addressHistory;
     }
 }
