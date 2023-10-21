@@ -4,9 +4,10 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
-import java.time.LocalDateTime;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
 import java.util.List;
-import java.util.Set;
 
 /**
  * 양방향 매핑
@@ -82,6 +83,28 @@ import java.util.Set;
  * 주의 : 이것도 영속성 전이처럼 참조하는 곳이 하나일 때만 사용해야한다!
  *       또한 부모를 제거해도 자식은 고아가 되는 것이므로 부모를 제거해도 자식이 함께 삭제된다.
  *       마치 CascadeType.REMOVE처럼 동작한다!
+ *
+ * JPQL
+ * - 테이블이 아닌 객체를 대상으로 검색하는 객체 지향 쿼리
+ * - SQL을 추상화해서 특정 데이터베이스 SQL에 의존하지 않음
+ * - JPQL을 한마디로 정의하면 객체 지향 SQL
+ *
+ * Criteria
+ * - JPQL만으로는 동적 쿼리를 만들기 굉장히 힘들기 때문에 Criteria를 사용해서 동적 쿼리를 만든다.
+ * - 컴파일 시점에 오류를 잡을 수 있음
+ * - 단점 : 코드가 다소 복잡해서 유지보수가 어려워 실무에서 잘 쓰이지 않는다.
+ *
+ *   그렇다면 동적 쿼리를 쉽게 짜기 위해서는 어떻게 해야할까?
+ *   바로 QueryDSL을 사용하면 된다!
+ *
+ * Native SQL
+ * - JPA가 제공하는 SQL을 직접 사용하는 기능
+ * - JPQL로 해결할 수 없는 특정 데이터베이스에 의존적인 기능
+ *   -> 오라클 CONNECT BY, 특정 DB만 사용하는 SQL 힌트 등등
+ *
+ * JDBC 직접 사용, SpringJdbcTemplate 등
+ * - JPA를 사용하면서 JDBC 커넥션을 직접 사용하거나 스프링 JdbcTemplate, 마이바티스 등을 함께 사용 가능하다.
+ * - 단, 영속성 컨텍스트를 적절한 시점에 강제로 플러시 해줘야 한다!
  */
 public class JpaMain {
 
@@ -95,33 +118,14 @@ public class JpaMain {
         tx.begin();
 
         try {
-            Member member = new Member();
-            member.setUsername("member1");
-            member.setHomeAddress(new Address("homeCity", "street", "10000"));
+            CriteriaBuilder cb = em.getCriteriaBuilder();
+            CriteriaQuery<Member> query = cb.createQuery(Member.class);
 
-            member.getFavoriteFoods().add("치킨");
-            member.getFavoriteFoods().add("족발");
-            member.getFavoriteFoods().add("피자");
+            Root<Member> m = query.from(Member.class);
 
-            member.getAddressHistory().add(new AddressEntity("old1", "street", "10000"));
-            member.getAddressHistory().add(new AddressEntity("old2", "street", "10000"));
-
-            em.persist(member);
-
-            em.flush();
-            em.clear();
-
-            System.out.println("============== START ==============");
-            Member findMember = em.find(Member.class, member.getId());
-
-//            Address a = findMember.getHomeAddress();
-//            findMember.setHomeAddress(new Address("newCity", a.getStreet(), a.getZipcode()));
-//
-//            findMember.getFavoriteFoods().remove("치킨");
-//            findMember.getFavoriteFoods().add("한식");
-
-//            findMember.getAddressHistory().remove(new Address("old1", "street", "10000"));
-//            findMember.getAddressHistory().add(new Address("newCity1", "street", "10000"));
+            CriteriaQuery<Member> cq = query.select(m).where(cb.equal(m.get("username"), "kim"));
+            List<Member> resultList = em.createQuery(cq)
+                    .getResultList();
 
             tx.commit();
         } catch (Exception e) {
