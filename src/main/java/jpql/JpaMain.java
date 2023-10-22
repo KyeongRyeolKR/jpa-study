@@ -65,6 +65,19 @@ import java.util.List;
  *     - ex) 회원의 이름과 팀의 이름이 같은 대상 외부 조인
  *       -> JPQL : SELECT m, t FROM Member m LEFT JOIN Team t ON m.username = t.name
  *          SQL : SELECT m.* t.* FROM Member m LEFT JOIN Team t ON m.username = t.name
+ * 서브 쿼리
+ *   지원 함수
+ *   - [NOT] EXISTS (subquery) : 서브 쿼리에 결과가 존재하면 참
+ *   - {ALL | ANY | SOME} (subquery)
+ *     - ALL : 모두 만족하면 참
+ *     - ANY, SOME : 조건을 하나라도 만족하면 참
+ *   - [NOT] IN (subquery) : 서브 쿼리의 결과 중 하나라도 같은 것이 있으면 참
+ *
+ *   JPA 서브 쿼리 한계
+ *   - JPA는 WHERE, HAVING 절에서만 서브 쿼리 사용 가능
+ *   - 하지만 하이버네이트를 구현체로 사용하면 SELECT 절도 사용 가능!
+ *   - FROM 절의 서브 쿼리는 JPQL에서 불가능
+ *     -> 해결 방안 : 조인으로 풀 수 있다면 풀어서 해결
  */
 public class JpaMain {
 
@@ -91,7 +104,7 @@ public class JpaMain {
             em.flush();
             em.clear();
 
-            String query = "select m from Member m join Team t on m.username = t.name";
+            String query = "select m from Member m";
             List<Member> resultList = em.createQuery(query, Member.class)
                     .getResultList();
 
