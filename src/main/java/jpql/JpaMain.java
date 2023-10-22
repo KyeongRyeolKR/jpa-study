@@ -1,6 +1,9 @@
 package jpql;
 
-import javax.persistence.*;
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.EntityTransaction;
+import javax.persistence.Persistence;
 import java.util.List;
 
 /**
@@ -78,6 +81,19 @@ import java.util.List;
  *   - 하지만 하이버네이트를 구현체로 사용하면 SELECT 절도 사용 가능!
  *   - FROM 절의 서브 쿼리는 JPQL에서 불가능
  *     -> 해결 방안 : 조인으로 풀 수 있다면 풀어서 해결
+ *
+ * JPQL 타입 표현
+ * - 문자 : 'HELLO', 'She''s'
+ * - 숫자 : 10L, 10D, 10F
+ * - Boolean : TRUE, FALSE
+ * - ENUM : jpabook.MemberType.ADMIN (패키지명 포함)
+ * - 엔티티 타입 : TYPE(m) = Member (상속 관계에서 사용)
+ *
+ *   기타(SQL과 문법이 같은 식)
+ *   - EXISTS, IN
+ *   - AND, OR, NOT
+ *   - =, >, >=, <, <= ,<>
+ *   - BETWEEN, LIKE, IS NULL
  */
 public class JpaMain {
 
@@ -99,16 +115,22 @@ public class JpaMain {
             member.setUsername("teamA");
             member.setAge(10);
             member.setTeam(team);
+            member.setType(MemberType.ADMIN);
             em.persist(member);
 
             em.flush();
             em.clear();
 
-            String query = "select m from Member m";
-            List<Member> resultList = em.createQuery(query, Member.class)
+            String query = "select m.username, 'HELLO', TRUE from Member m where m.type = :userType";
+            List<Object[]> resultList = em.createQuery(query)
+                    .setParameter("userType", MemberType.ADMIN)
                     .getResultList();
 
-            System.out.println("resultList.size() = " + resultList.size());
+            for (Object[] objects : resultList) {
+                System.out.println("objects = " + objects[0]);
+                System.out.println("objects = " + objects[1]);
+                System.out.println("objects = " + objects[2]);
+            }
 
             tx.commit();
         } catch (Exception e) {
