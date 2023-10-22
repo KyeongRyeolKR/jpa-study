@@ -30,6 +30,21 @@ import java.util.List;
  * - 위치 기준
  *   - ex) SELECT m FROM Member m WHERE m.username = ?1git
  *     ->  query.setParameter(1, usernameParam);
+ *
+ * 프로젝션
+ * - SELECT 절에 조회할 대상을 지정하는 것
+ * - 프로젝션 대상 : 엔티티, 임베디드 타입, 스칼라 타입(숫자, 문자 등 기본 데이터 타입)
+ * - DISTINCT로 중복 제거 가능
+ *
+ *   여러 값 조회
+ *   - SELECT m.username, m.age FROM Member m
+ *     1. Query 타입으로 조회
+ *     2. Object[] 타입으로 조회
+ *     3. new 명령어로 조회
+ *       - 단순 값을 DTO로 바로 조회
+ *       - 패키지 명을 포함한 전체 클래스 명 입력
+ *       - 순서와 타입이 일치하는 생성자 필요
+ *       - ex) SELECT new jpql.MemberDTO(m.username, m.age) FROM Member m
  */
 public class JpaMain {
 
@@ -48,11 +63,15 @@ public class JpaMain {
             member.setAge(10);
             em.persist(member);
 
-            Member result = em.createQuery("select m from Member m where m.username = :username", Member.class)
-                    .setParameter("username", "member1")
-                    .getSingleResult();
+            em.flush();
+            em.clear();
 
-            System.out.println("result = " + result);
+            List<MemberDTO> resultList = em.createQuery("select new jpql.MemberDTO(m.username, m.age) from Member m", MemberDTO.class)
+                    .getResultList();
+
+            MemberDTO memberDTO = resultList.get(0);
+            System.out.println("memberDTO.getUsername() = " + memberDTO.getUsername());
+            System.out.println("memberDTO.getAge() = " + memberDTO.getAge());
 
             tx.commit();
         } catch (Exception e) {
