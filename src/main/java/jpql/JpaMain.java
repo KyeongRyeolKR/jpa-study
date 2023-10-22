@@ -103,6 +103,17 @@ import java.util.List;
  * - NULLIF : 두 값이 같으면 null 반환, 다르면 첫번째 값 반환
  *   -> ex) 사용자 이름이 '관리자'면 null을 반환하고 나머지는 본인의 이름을 반환
  *     -> SELECT NULLIF(m.username, '관리자') FROM Member m
+ *
+ * JPQL 기본 함수
+ * - CONCAT, SUBSTRING, TRIM, LOWER, UPPER, LENGTH, LOCATE, ABS, SQRT, MOD
+ * - SIZE : JPA 전용 함수, 컬렉션의 크기를 반환
+ * - INDEX : JPA 전용 함수, @OrderColumn를 쓸 때만 사용 가능, 컬렉션의 위치 값 반환(웬만하면 안쓰는게 좋음)
+ *
+ * 참고 : 하이버네이트 구현체를 사용하면 위에 나열된 함수를 제외하고도 기본적으로 설정된 DB 방언에 따른 함수들이 미리 등록되어 있다.
+ *
+ * 사용자 정의 함수 호출
+ * - 하이버네이트는 사용 전 방언에 추가해야 한다.
+ * - 사용하는 DB 방언을 상속 받고 사용자 정의 함수를 등록한다.
  */
 public class JpaMain {
 
@@ -127,10 +138,14 @@ public class JpaMain {
             member.setType(MemberType.ADMIN);
             em.persist(member);
 
+            Member member2 = new Member();
+            member2.setUsername("관리자2");
+            em.persist(member2);
+
             em.flush();
             em.clear();
 
-            String query = "select nullif(m.username, '관리자') from Member m";
+            String query = "select group_concat(m.username) from Member m";
             List<String> resultList = em.createQuery(query, String.class)
                     .getResultList();
 
