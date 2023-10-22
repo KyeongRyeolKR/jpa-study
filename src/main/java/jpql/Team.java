@@ -1,9 +1,14 @@
-package relationmapping;
+package jpql;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import java.util.ArrayList;
+import java.util.List;
 
-//@Entity
-public class Child {
+@Entity
+public class Team {
 
     @Id
     @GeneratedValue
@@ -11,9 +16,8 @@ public class Child {
 
     private String name;
 
-    @ManyToOne
-    @JoinColumn(name = "parent_id")
-    private Parent parent;
+    @OneToMany(mappedBy = "team")
+    private List<Member> members = new ArrayList<>();
 
     public Long getId() {
         return id;
@@ -29,13 +33,5 @@ public class Child {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public Parent getParent() {
-        return parent;
-    }
-
-    public void setParent(Parent parent) {
-        this.parent = parent;
     }
 }
