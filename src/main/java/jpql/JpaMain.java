@@ -94,6 +94,15 @@ import java.util.List;
  *   - AND, OR, NOT
  *   - =, >, >=, <, <= ,<>
  *   - BETWEEN, LIKE, IS NULL
+ *
+ * 조건식 - CASE 식
+ * - 기본 CASE 식, 단순 CASE 식 : 기존 SQL 문법과 같음
+ * - COALESCE : 하나씩 조회해서 null이 아니면 반환
+ *   -> ex) 사용자 이름이 없으면 이름 없는 회원을 반환
+ *      -> SELECT COALESCE(m.username, '이름 없는 회원') FROM Member m
+ * - NULLIF : 두 값이 같으면 null 반환, 다르면 첫번째 값 반환
+ *   -> ex) 사용자 이름이 '관리자'면 null을 반환하고 나머지는 본인의 이름을 반환
+ *     -> SELECT NULLIF(m.username, '관리자') FROM Member m
  */
 public class JpaMain {
 
@@ -112,7 +121,7 @@ public class JpaMain {
             em.persist(team);
 
             Member member = new Member();
-            member.setUsername("teamA");
+            member.setUsername("관리자");
             member.setAge(10);
             member.setTeam(team);
             member.setType(MemberType.ADMIN);
@@ -121,15 +130,12 @@ public class JpaMain {
             em.flush();
             em.clear();
 
-            String query = "select m.username, 'HELLO', TRUE from Member m where m.type = :userType";
-            List<Object[]> resultList = em.createQuery(query)
-                    .setParameter("userType", MemberType.ADMIN)
+            String query = "select nullif(m.username, '관리자') from Member m";
+            List<String> resultList = em.createQuery(query, String.class)
                     .getResultList();
 
-            for (Object[] objects : resultList) {
-                System.out.println("objects = " + objects[0]);
-                System.out.println("objects = " + objects[1]);
-                System.out.println("objects = " + objects[2]);
+            for (String s : resultList) {
+                System.out.println("s = " + s);
             }
 
             tx.commit();
