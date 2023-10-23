@@ -153,6 +153,22 @@ import java.util.List;
  *   - 가급적 묵시적 조인 대신에 명시적 조인을 사용해라!
  *   - 조인은 SQL 튜닝에 굉장히 중요한 포인트이기 때문에
  *     묵시적 조인은 조인이 일어나는 상황을 한눈에 파악하기 어렵기 때문이다.
+ *
+ * 페치 조인(FETCH JOIN)
+ * - SQL의 조인 종류가 아니라 JPQL에서 성능 최적화를 위해 제공하는 조인 기능
+ * - 연관된 엔티티나 컬렉션을 SQL 한 번으로 함께 조회하는 기능
+ * - JOIN FETCH 명령어 사용
+ *
+ *   주의 : 컬렉션에 페치 조인을 사용했을 경우, 데이터가 뻥튀기 될 수 있음!
+ *   해결 방안 : DISTINCT 명령어를 SELECT 절에 사용함으로써 중복을 제거할 수 있다.
+ *             단, DB에서 DISTINCT 명령어는 데이터의 모든 컬럼 값이 일치해야 중복이라고 생각한다.
+ *             그렇기에 JPQL은 DISTINCT 명령어에 애플리케이션의 엔티티 중복 제거 기능을 함께 넣었다!
+ *
+ *   페치 조인과 일반 조인의 차이
+ *   - JPQL은 결과를 반환할 때 연관관계를 고려하지 않음
+ *   - 단지 SELECT 절에 지정한 엔티티만 조회할 뿐
+ *   - 페치 조인을 사용할 때만 연관된 엔티티도 함께 조회함(즉시 로딩)
+ *   - 페치 조인은 객체 그래프를 SQL 한번에 조회하는 개념이다!
  */
 public class JpaMain {
 
@@ -166,30 +182,42 @@ public class JpaMain {
         tx.begin();
 
         try {
-            Team team = new Team();
-            team.setName("teamA");
-            em.persist(team);
+            Team teamA = new Team();
+            teamA.setName("팀A");
+            em.persist(teamA);
 
-            Member member = new Member();
-            member.setUsername("관리자");
-            member.setAge(10);
-            member.setTeam(team);
-            member.setType(MemberType.ADMIN);
-            em.persist(member);
+            Team teamB = new Team();
+            teamB.setName("팀B");
+            em.persist(teamB);
+
+            Member member1 = new Member();
+            member1.setUsername("회원1");
+            member1.setTeam(teamA);
+            em.persist(member1);
 
             Member member2 = new Member();
-            member2.setUsername("관리자2");
-            member2.setTeam(team);
+            member2.setUsername("회원2");
+            member2.setTeam(teamA);
             em.persist(member2);
+
+            Member member3 = new Member();
+            member3.setUsername("회원3");
+            member3.setTeam(teamB);
+            em.persist(member3);
 
             em.flush();
             em.clear();
 
-            String query = "select m.username from Team t join t.members m";
-            String result = em.createQuery(query, String.class)
-                    .getSingleResult();
+            String query = "select t from Team t join fetch t.members m";
+            List<Team> result = em.createQuery(query, Team.class)
+                    .getResultList();
 
-            System.out.println("result = " + result);
+            for (Team team : result) {
+                System.out.println("team = " + team.getName() + " | members = " + team.getMembers().size());
+                for (Member member : team.getMembers()) {
+                    System.out.println("-> member = " + member);
+                }
+            }
 
             tx.commit();
         } catch (Exception e) {
