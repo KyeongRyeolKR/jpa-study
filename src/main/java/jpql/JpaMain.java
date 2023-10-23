@@ -187,6 +187,21 @@ import java.util.List;
  *   - 페치 조인은 객체 그래프를 유지할 때 사용하면 효과적(객체 그래프 탐색)
  *   - 여러 테이블에서 조인해서 엔티티가 가진 모양이 아닌 전혀 다른 결과를 내야 한다면,
  *     페치 조인보다는 일반 조인을 사용하고 필요한 데이터들만 조회해서 DTO로 반환하는 것이 효과적이다!
+ *
+ * 다형성 쿼리
+ *   TYPE
+ *   - 조회 대상을 특정 자식으로 한정
+ *   - ex) Item 중에 Book, Movie를 조회해라
+ *     -> JPQL : SELECT i FROM Item i WHERE TYPE(i) IN (Book, Movie)
+ *        SQL  : SELECT i FROM i WHERE i.DTYPE IN ('B', 'M')
+ *
+ *   TREAT
+ *   - 자바의 타입 캐스팅과 유사한 기능
+ *   - 상속 구조에서 부모 타입을 특정 자식 타입으로 다룰 때 사용
+ *   - FROM, WHERE, SELECT(하이버네이트만 지원) 사용
+ *   - ex) 부모인 Iteam과 자식 Book이 있다.
+ *     -> JPQL : SELECT i FROM Item i WHERE TREAT(i as Book).author = 'kim'
+ *        SQL  : SELECT i.* FROM Item i WHERE i.DTYPE = 'B' and i.author = 'kim'
  */
 public class JpaMain {
 
