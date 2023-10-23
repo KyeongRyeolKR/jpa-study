@@ -4,6 +4,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -114,6 +115,44 @@ import java.util.List;
  * 사용자 정의 함수 호출
  * - 하이버네이트는 사용 전 방언에 추가해야 한다.
  * - 사용하는 DB 방언을 상속 받고 사용자 정의 함수를 등록한다.
+ *
+ * 경로 표현식
+ * - .(점)을 찍어 객체 그래프를 탐색하는 것
+ *
+ *   용어 정리 및 특징
+ *   - 상태 필드 : 단순히 값을 저장하기 위한 필드
+ *     - 특징 : 경로 탐색의 끝, 더 탐색 불가
+ *   - 연관 필드 : 연관관계를 위한 필드
+ *     - 단일 값 연관 필드 : @ManyToOne, @OneToOne, 대상이 엔티티(ex: m.team)
+ *       - 특징 : 묵시적 내부 조인 발생, 더 탐색 가능
+ *     - 컬렉션 값 연관 필드 : @OneToMany, @ManyToMany, 대상이 컬렉션(ex: m.orders)
+ *       - 특징 : 묵시적 내부 조인 발생, 더 탐색 불가
+ *               하지만 FROM 절에서 명시적 조인을 사용해 별칭을 얻으면 별칭을 통해 탐색 가능!
+ *
+ *   명시적 조인, 묵시적 조인
+ *   - 명시적 조인 : JOIN 키워드 직접 사용
+ *   - 묵시적 조인 : 경로 표현식에 의해 묵시적으로 SQL 조인 발생(내부 조인만 가능)
+ *
+ *   예시
+ *   - SELECT o.member.team FROM Order o                    => 성공
+ *     - 단일 값 연관 필드, 묵시적 조인 발생
+ *   - SELECT t.members FROM Team                           => 성공
+ *     - 컬렉션 값 연관 필드, 묵시적 조인 발생
+ *   - SELECT t.members.username FROM Team t                => 실패
+ *     - 컬렉션 값 연관 필드, 더이상 탐색이 불가능하기 때문에 실패
+ *   - SELECT m.username FROM Team t JOIN t.members m       => 성공
+ *     - 컬렉션 값 연관 필드를 더 탐색하기 위해 컬렉션 값 연관 필드를 조인을 해서 별칭을 얻고,
+ *       상태 필드를 프로젝션으로 두어 명시적 조인으로 풀어냈기에 성공
+ *
+ *   묵시적 조인 시 주의 사항
+ *   - 항상 내부 조인
+ *   - 컬렉션은 경로 탐색의 끝! 명시적 조인을 통해 별칭을 얻어야함
+ *   - 경로 탐색은 주로 SELECT, WHERE 절에서 사용하지만, 묵시적 조인으로 인해 SQL의 FROM 절에 영향을 줌
+ *
+ *   실무 조언
+ *   - 가급적 묵시적 조인 대신에 명시적 조인을 사용해라!
+ *   - 조인은 SQL 튜닝에 굉장히 중요한 포인트이기 때문에
+ *     묵시적 조인은 조인이 일어나는 상황을 한눈에 파악하기 어렵기 때문이다.
  */
 public class JpaMain {
 
@@ -140,18 +179,17 @@ public class JpaMain {
 
             Member member2 = new Member();
             member2.setUsername("관리자2");
+            member2.setTeam(team);
             em.persist(member2);
 
             em.flush();
             em.clear();
 
-            String query = "select group_concat(m.username) from Member m";
-            List<String> resultList = em.createQuery(query, String.class)
-                    .getResultList();
+            String query = "select m.username from Team t join t.members m";
+            String result = em.createQuery(query, String.class)
+                    .getSingleResult();
 
-            for (String s : resultList) {
-                System.out.println("s = " + s);
-            }
+            System.out.println("result = " + result);
 
             tx.commit();
         } catch (Exception e) {
