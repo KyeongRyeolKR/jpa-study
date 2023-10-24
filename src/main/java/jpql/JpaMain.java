@@ -222,6 +222,30 @@ import java.util.List;
  *     네임드 쿼리는 로딩 시점에 한번 초기화를 한 후 내부적으로 저장해 캐싱이 된다!
  * - 그러므로 애플리케이션 로딩 시점에 쿼리를 검증할 수 있음!
  *   - 오타 및 잘못된 쿼리를 보낼 경우, 애플리케이션 로딩 시점에 런타임 에러 발생
+ *
+ * 벌크 연산
+ * - 예시) 재고가 10개 미만인 모든 상품의 가격을 10% 상승하려면?
+ * - JPA 변경 감지 기능으로 해당 요구사항을 만족하려면 너무 많은 SQL이 실행됨
+ *   1. 재고가 10개 미만인 상품을 리스트로 조회
+ *   2. 상품 엔티티의 가격 10% 증가
+ *   3. 트랙잭션 커밋 시점에 변경 감지 기능 동작
+ * - 변경된 데이터가 100건이라면 100번의 UPDATE SQL 실행
+ *
+ *   그렇기 때문에 JPA는 벌크 연산을 제공한다!
+ *   - 쿼리 한번으로 여러 테이블 로우를 변경할 수 있음
+ *   - executeUpdate(), return 영향 받은 엔티티 개수
+ *   - UPDATE, DELETE 지원
+ *   - INSERT는 하이버네이트에서만 지원
+ *
+ *   주의 사항
+ *   - 벌크 연산은 영속성 컨텍스트를 무시하고 데이터베이스에 직접 쿼리를 하는 것!
+ *   - 그러므로 데이터 정합성이 안맞을 수도 있음
+ *   - ex) DB에는 이미 나이가 20살로 변경되었는데, 영속성 컨텍스트에는 이전의 나이 그대로인 경우
+ *
+ *   해결 방안
+ *   1. 영속성 컨텍스트에 어떤 변경 사항을 남기기 전에 벌크 연산을 최우선으로 실행하는 방법
+ *   2. 벌크 연산을 수행하고 나서 영속성 컨텍스트를 초기화 하는 방법(em.clear())
+ *     - 참고 : 벌크 연산은 실행 되기 직전에 flush가 일어난다!
  */
 public class JpaMain {
 
@@ -245,29 +269,35 @@ public class JpaMain {
 
             Member member1 = new Member();
             member1.setUsername("회원1");
+            member1.setAge(0);
             member1.setTeam(teamA);
             em.persist(member1);
 
             Member member2 = new Member();
             member2.setUsername("회원2");
+            member1.setAge(0);
             member2.setTeam(teamA);
             em.persist(member2);
 
             Member member3 = new Member();
             member3.setUsername("회원3");
+            member1.setAge(0);
             member3.setTeam(teamB);
             em.persist(member3);
 
             em.flush();
             em.clear();
 
-            List<Member> resultList = em.createNamedQuery("Member.findByUsername", Member.class)
-                    .setParameter("username", "회원1")
-                    .getResultList();
+            int resultCount = em.createQuery("update Member m set m.age = 20")
+                    .executeUpdate();
+            System.out.println("resultCount = " + resultCount);
 
-            for (Member member : resultList) {
-                System.out.println("member = " + member);
-            }
+            Member findMember = em.find(Member.class, member1.getId());
+            System.out.println("findMember = " + findMember);
+
+            System.out.println("member1.getAge() = " + member1.getAge());
+            System.out.println("member2.getAge() = " + member2.getAge());
+            System.out.println("member3.getAge() = " + member3.getAge());
 
             tx.commit();
         } catch (Exception e) {
