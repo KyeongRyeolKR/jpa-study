@@ -202,6 +202,16 @@ import java.util.List;
  *   - ex) 부모인 Iteam과 자식 Book이 있다.
  *     -> JPQL : SELECT i FROM Item i WHERE TREAT(i as Book).author = 'kim'
  *        SQL  : SELECT i.* FROM Item i WHERE i.DTYPE = 'B' and i.author = 'kim'
+ *
+ * 엔티티 직접 사용
+ *   기본 키 값
+ *   - JPQL에서 엔티티를 직접 사용하면 SQL에서 해당 엔티티의 기본 키 값을 사용함
+ *   - ex) JPQL : SELECT COUNT(m) FROM Member m | SELECT COUNT(m.id) FROM Member m
+ *         SQL  : SELECT COUNT(m.id) as cnt FROM Member m
+ *
+ *   외래 키 값
+ *   - ex) JQPL : SELECT m FROM Member m WHERE m.team = :team | SELECT m FROM Member m WHERE m.team.id = :team.id
+ *         SQL  : SELECT m.* FROM Member m WHERE m.team_id = ?
  */
 public class JpaMain {
 
@@ -241,17 +251,13 @@ public class JpaMain {
             em.flush();
             em.clear();
 
-            String query = "select t from Team t";
-            List<Team> result = em.createQuery(query, Team.class)
-                    .setFirstResult(0)
-                    .setMaxResults(2)
+            String query = "select m from Member m where m.team = :team";
+            List<Member> members = em.createQuery(query, Member.class)
+                    .setParameter("team", teamA)
                     .getResultList();
 
-            for (Team team : result) {
-                System.out.println("team = " + team.getName() + " | members = " + team.getMembers().size());
-                for (Member member : team.getMembers()) {
-                    System.out.println("-> member = " + member);
-                }
+            for (Member member : members) {
+                System.out.println("member = " + member);
             }
 
             tx.commit();
