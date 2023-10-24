@@ -212,6 +212,16 @@ import java.util.List;
  *   외래 키 값
  *   - ex) JQPL : SELECT m FROM Member m WHERE m.team = :team | SELECT m FROM Member m WHERE m.team.id = :team.id
  *         SQL  : SELECT m.* FROM Member m WHERE m.team_id = ?
+ *
+ * 네임드 쿼리(Named Query)
+ * - 미리 쿼리에 이름을 부여해서 쿼리를 재활용할 수 있다!
+ * - 정적 쿼리만 가능
+ * - 애노테이션 또는 xml에 정의
+ * - 애플리케이션 로딩 시점에 초기화 후 재사용(캐싱)
+ *   - 원래는 JQPL을 SQL로 파싱하기 위한 리소스가 발생하는데,
+ *     네임드 쿼리는 로딩 시점에 한번 초기화를 한 후 내부적으로 저장해 캐싱이 된다!
+ * - 그러므로 애플리케이션 로딩 시점에 쿼리를 검증할 수 있음!
+ *   - 오타 및 잘못된 쿼리를 보낼 경우, 애플리케이션 로딩 시점에 런타임 에러 발생
  */
 public class JpaMain {
 
@@ -251,12 +261,11 @@ public class JpaMain {
             em.flush();
             em.clear();
 
-            String query = "select m from Member m where m.team = :team";
-            List<Member> members = em.createQuery(query, Member.class)
-                    .setParameter("team", teamA)
+            List<Member> resultList = em.createNamedQuery("Member.findByUsername", Member.class)
+                    .setParameter("username", "회원1")
                     .getResultList();
 
-            for (Member member : members) {
+            for (Member member : resultList) {
                 System.out.println("member = " + member);
             }
 
